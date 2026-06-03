@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="Online Rubik's Cube timer with WCA scrambles, Stackmat-style controls, and screen calibration."
+    />
+    <title>Rubik's Cube Timer — onlinerubikscubetimer.com</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#3dffa8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app" class="app">
+      <header class="top-bar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <h1 class="brand-title">Cube Timer</h1>
+            <p class="brand-sub">onlinerubikscubetimer.com</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button type="button" id="btn-focus" class="btn ghost" title="Focus mode (F)">Focus</button>
+          <button type="button" id="btn-calibrate" class="btn ghost" title="Screen calibration">
+            Calibrate
+          </button>
+          <button type="button" id="btn-settings" class="btn ghost" aria-label="Settings">⚙</button>
+        </div>
+      </header>
+
+      <main class="main" id="main-area">
+        <div class="scramble-row">
+          <p class="scramble" id="scramble-text" aria-live="polite"></p>
+          <button type="button" class="btn ghost btn-icon" id="btn-copy-scramble" title="Copy scramble">⎘</button>
+        </div>
+
+        <section class="timer-stage" id="timer-stage" aria-label="Timer">
+          <button type="button" class="hand-pad left" id="pad-left" aria-label="Left hand pad"></button>
+          <div class="timer-core" id="timer-core" tabindex="0" role="button" aria-label="Timer — hold to start, release to stop">
+            <div class="timer-status" id="timer-status"></div>
+            <div class="timer-display" id="timer-display">0.00</div>
+            <p class="timer-hint" id="timer-hint">Hold space or pads — release to start</p>
+          </div>
+          <button type="button" class="hand-pad right" id="pad-right" aria-label="Right hand pad"></button>
+        </section>
+
+        <div class="panels" id="panels">
+          <section class="panel times-panel">
+            <h2>Times</h2>
+            <ul class="times-list" id="times-list"></ul>
+            <div class="panel-actions">
+              <button type="button" class="btn small" id="btn-new-scramble" title="New scramble">↻</button>
+              <button type="button" class="btn small" id="btn-import" title="Import times">↑</button>
+              <button type="button" class="btn small" id="btn-export" title="Export">↓</button>
+              <button type="button" class="btn small danger" id="btn-clear-times" title="Clear all">✕</button>
+            </div>
+          </section>
+
+          <section class="panel stats-panel">
+            <h2>Statistics</h2>
+            <dl class="stats-grid" id="stats-grid"></dl>
+          </section>
+
+          <section class="panel viz-panel" id="viz-panel">
+            <h2>Scramble</h2>
+            <div class="cube-viz" id="cube-viz"></div>
+          </section>
+        </div>
+      </main>
+
+      <!-- Settings -->
+      <dialog id="settings-dialog" class="modal">
+        <form method="dialog" class="modal-body" id="settings-form">
+          <header class="modal-header">
+            <h2>Settings</h2>
+            <button type="submit" class="btn ghost" value="cancel" aria-label="Close">✕</button>
+          </header>
+
+          <fieldset>
+            <legend>Puzzle</legend>
+            <select id="setting-puzzle" name="puzzle">
+              <option value="2">2×2×2</option>
+              <option value="3" selected>3×3×3</option>
+              <option value="4">4×4×4</option>
+              <option value="5">5×5×5</option>
+              <option value="6">6×6×6</option>
+              <option value="7">7×7×7</option>
+            </select>
+          </fieldset>
+
+          <fieldset>
+            <legend>Inspection (WCA)</legend>
+            <select id="setting-inspection" name="inspection">
+              <option value="off">Off</option>
+              <option value="3">3 seconds</option>
+              <option value="10">10 seconds</option>
+              <option value="15">15 seconds</option>
+            </select>
+          </fieldset>
+
+          <fieldset>
+            <legend>Timer</legend>
+            <label class="check"><input type="checkbox" id="setting-hide-panels" checked /> Hide panels while timing</label>
+            <label class="check"><input type="checkbox" id="setting-hide-time" /> Hide time while timing</label>
+            <label class="check"><input type="checkbox" id="setting-sounds" checked /> Play sounds</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Scramble</legend>
+            <label class="field">
+              Length
+              <input type="number" id="setting-scramble-len" min="8" max="40" value="20" />
+            </label>
+            <label class="check"><input type="checkbox" id="setting-separate" checked /> Separate moves</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Appearance</legend>
+            <label class="field">
+              Theme
+              <select id="setting-theme" name="theme">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
+            </label>
+            <label class="check"><input type="checkbox" id="setting-focus" /> Focus mode (minimal UI)</label>
+          </fieldset>
+
+          <fieldset class="share-fieldset">
+            <legend>Share settings</legend>
+            <p class="share-hint">Bookmark or share this link to restore your setup.</p>
+            <div class="share-row">
+              <input type="text" id="share-url" readonly />
+              <button type="button" class="btn small primary" id="btn-copy-share">Copy</button>
+            </div>
+          </fieldset>
+        </form>
+      </dialog>
+
+      <dialog id="import-dialog" class="modal">
+        <form method="dialog" class="modal-body" id="import-form">
+          <header class="modal-header">
+            <h2>Import times</h2>
+            <button type="submit" class="btn ghost" value="cancel">✕</button>
+          </header>
+          <p class="modal-intro">
+            Paste times one per line (e.g. <code>12.34</code>) or full export lines from this timer.
+          </p>
+          <textarea id="import-text" rows="8" placeholder="12.34&#10;15.02&#10;…"></textarea>
+          <label class="check">
+            <input type="checkbox" id="import-replace" />
+            Replace current session (unchecked = append)
+          </label>
+          <p class="import-error hidden" id="import-error"></p>
+          <div class="modal-footer">
+            <button type="submit" class="btn primary" value="import">Import</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- Calibration -->
+      <dialog id="calibration-dialog" class="modal">
+        <div class="modal-body">
+          <header class="modal-header">
+            <h2>Screen Calibration</h2>
+            <button type="button" class="btn ghost" id="calibration-close" aria-label="Close">✕</button>
+          </header>
+          <p class="modal-intro">
+            Calibrate hand-pad size to your screen so timing feels like a real Stackmat mat.
+          </p>
+
+          <div class="cal-tabs" role="tablist">
+            <button type="button" class="cal-tab active" data-method="auto" role="tab">Auto-Detect</button>
+            <button type="button" class="cal-tab" data-method="diagonal" role="tab">Screen Diagonal</button>
+            <button type="button" class="cal-tab" data-method="card" role="tab">Credit Card</button>
+          </div>
+
+          <div class="cal-panel" id="cal-panel-auto">
+            <p>Estimates pixel density from your device type and screen resolution.</p>
+            <button type="button" class="btn primary" id="cal-apply-auto">Apply auto-detect</button>
+          </div>
+
+          <div class="cal-panel hidden" id="cal-panel-diagonal">
+            <label class="field">
+              Screen diagonal (inches)
+              <input type="number" id="cal-diagonal-input" min="4" max="40" step="0.1" value="15.6" />
+            </label>
+            <button type="button" class="btn primary" id="cal-apply-diagonal">Apply diagonal</button>
+          </div>
+
+          <div class="cal-panel hidden" id="cal-panel-card">
+            <p>Place a standard card (85.6 × 54 mm) on the outline and adjust until edges match.</p>
+            <div class="card-stage" id="card-stage">
+              <div class="card-outline" id="card-outline"></div>
+            </div>
+            <label class="field">
+              Scale
+              <input type="range" id="cal-card-slider" min="70" max="130" value="100" />
+              <span id="cal-card-scale-label">100%</span>
+            </label>
+            <button type="button" class="btn primary" id="cal-apply-card">Apply card calibration</button>
+          </div>
+
+          <p class="cal-status" id="cal-status"></p>
+        </div>
+      </dialog>
+
+      <!-- Solve detail -->
+      <dialog id="solve-dialog" class="modal">
+        <form method="dialog" class="modal-body" id="solve-form">
+          <header class="modal-header">
+            <h2>Solve</h2>
+            <button type="submit" class="btn ghost" value="cancel">✕</button>
+          </header>
+          <p class="solve-time" id="solve-dialog-time"></p>
+          <p class="solve-scramble" id="solve-dialog-scramble"></p>
+          <fieldset>
+            <legend>Penalty</legend>
+            <label><input type="radio" name="penalty" value="none" checked /> OK</label>
+            <label><input type="radio" name="penalty" value="+2" /> +2</label>
+            <label><input type="radio" name="penalty" value="DNF" /> DNF</label>
+          </fieldset>
+          <label class="field">
+            Comment
+            <input type="text" id="solve-comment" maxlength="200" />
+          </label>
+          <div class="modal-footer">
+            <button type="button" class="btn danger" id="solve-delete">Delete</button>
+            <button type="submit" class="btn primary" value="save">Save</button>
+          </div>
+        </form>
+      </dialog>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
