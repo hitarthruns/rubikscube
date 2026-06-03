@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Rubik's Cube Timer
 
 Online Stackmat-style timer for **onlinerubikscubetimer.com** — WCA scrambles, session statistics, and three screen calibration methods.
@@ -31,3 +32,6 @@ npm run dev
 npm run build
 npm run preview
 ```
+=======
+# rubikscube
+>>>>>>> 1ce341e13e948dd2cb2baf010bc70a087e5a35aa
